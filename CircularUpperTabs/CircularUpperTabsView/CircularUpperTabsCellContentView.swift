@@ -34,8 +34,6 @@ class CircularUpperTabsCellContentView: UIView {
     }
 
     private func setup() {
-        print("alocando CircularUpperTabsCellContentView")
-
         let label = UILabel(frame: frame)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textAlignment = .center
@@ -64,12 +62,6 @@ class CircularUpperTabsCellContentView: UIView {
             print("label nula")
             return
         }
-
-//        if cellState.isSelected {
-//            label.alpha = 1.0
-//        } else {
-//            label.alpha = 0.3
-//        }
 
         label.text = cellState.text
 

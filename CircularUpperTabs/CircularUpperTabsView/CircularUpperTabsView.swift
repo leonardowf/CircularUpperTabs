@@ -9,21 +9,25 @@
 import UIKit
 
 protocol CircularUpperTabsViewDataSource: class {
-    func getCellState() -> [CircularUpperTabsCellState]
+    func getCellStatesFor(circularUpperTabsView: CircularUpperTabsView) -> [CircularUpperTabsCellState]
 }
 
 class CircularUpperTabsView: UIView {
-    let cellIdentifier = "CircularUpperTabsCell"
-    weak var movingView: UIView?
+    fileprivate struct CellAndAnimationOverlayView {
+        let cell: CircularUpperTabsCell
+        let animationOverlayView: CircularUpperTabsCellContentView
+    }
 
-    private weak var collectionView: UICollectionView!
+    fileprivate let cellIdentifier = "CircularUpperTabsCell"
+    fileprivate weak var movingView: UIView?
+    fileprivate weak var collectionView: UICollectionView!
     weak var dataSource: CircularUpperTabsViewDataSource? {
         didSet {
             reloadData()
         }
     }
 
-    internal var cellStates: [CircularUpperTabsCellState] = []
+    fileprivate var cellStates: [CircularUpperTabsCellState] = []
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -38,7 +42,7 @@ class CircularUpperTabsView: UIView {
     }
 
     private func setup() {
-        let flowLayout = SomeShit()
+        let flowLayout = UICollectionViewFlowLayout()
         flowLayout.scrollDirection = .horizontal
 
         let collectionView = UICollectionView(frame: frame, collectionViewLayout: flowLayout)
@@ -64,14 +68,20 @@ class CircularUpperTabsView: UIView {
 
         let constraintsAttributes: [NSLayoutAttribute] = [.top, .leading, .trailing, .bottom]
         let constraints = constraintsAttributes.map { (layoutAttribute) -> NSLayoutConstraint in
-            NSLayoutConstraint(item: collectionView, attribute: layoutAttribute, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: layoutAttribute, multiplier: 1.0, constant: 0.0)
+            NSLayoutConstraint(item: collectionView,
+                               attribute: layoutAttribute,
+                               relatedBy: NSLayoutRelation.equal,
+                               toItem: self,
+                               attribute: layoutAttribute,
+                               multiplier: 1.0,
+                               constant: 0.0)
         }
 
         addConstraints(constraints)
     }
 
     func reloadData() {
-        guard let cellStates = dataSource?.getCellState() else {
+        guard let cellStates = dataSource?.getCellStatesFor(circularUpperTabsView: self) else {
             return
         }
 
@@ -80,7 +90,7 @@ class CircularUpperTabsView: UIView {
         collectionView.reloadData()
     }
 
-    func fakeNeighborsRemovalOfCellAt(indexPath: IndexPath) -> [CircularUpperTabsCellContentView] {
+    fileprivate func addAnimationOverlayViewFor(indexPath: IndexPath) -> [CellAndAnimationOverlayView] {
         var neighbors: [CircularUpperTabsCell] = []
 
         guard let visibleCells = collectionView.visibleCells as? [CircularUpperTabsCell] else {
@@ -89,23 +99,43 @@ class CircularUpperTabsView: UIView {
 
         neighbors.append(contentsOf: visibleCells)
 
-        var addedViews: [CircularUpperTabsCellContentView] = []
+        var addedViews: [CellAndAnimationOverlayView] = []
+
+        neighbors = neighbors.filter { (cell) -> Bool in
+            guard let neighborIndexPath = collectionView.indexPath(for: cell) else {
+                return true
+            }
+            return indexPath.item != neighborIndexPath.item
+        }
 
         neighbors.forEach { (cell) in
             let view = CircularUpperTabsCellContentView(frame: cell.frame)
             view.cellState = cell.cellState
             collectionView.addSubview(view)
-            addedViews.append(view)
+            let cellAndFakeView = CellAndAnimationOverlayView(cell: cell, animationOverlayView: view)
+
+            addedViews.append(cellAndFakeView)
         }
 
         return addedViews
-
     }
 
+    fileprivate func hideCellsWithOverlayView(cellAndAnimationOverlayViews: [CellAndAnimationOverlayView]) {
+        cellAndAnimationOverlayViews.forEach({ (cellAndAnimationOverlayView) in
+            cellAndAnimationOverlayView.cell.isHidden = true
+        })
+    }
+
+    fileprivate func removeOverlayViewsShowingCells(cellAndAnimationOverlayViews: [CellAndAnimationOverlayView]) {
+        cellAndAnimationOverlayViews.forEach { (cellAndAnimationOverlayView) in
+            cellAndAnimationOverlayView.animationOverlayView.removeFromSuperview()
+            cellAndAnimationOverlayView.cell.isHidden = false
+        }
+    }
 }
 
 extension CircularUpperTabsView: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    internal func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         var cellsToRender: [CircularUpperTabsCell] = []
 
         for (index, state) in cellStates.enumerated() {
@@ -129,37 +159,14 @@ extension CircularUpperTabsView: UICollectionViewDelegate {
 
         cellsToRender.append(cell)
 
-        var addedCells: [CircularUpperTabsCellContentView] = []
-        let neighborAddedCells = self.fakeNeighborsRemovalOfCellAt(indexPath: indexPath)
-        addedCells.append(contentsOf: neighborAddedCells)
-
-        guard let visibleCells = collectionView.visibleCells as? [CircularUpperTabsCell] else {
-            return
-        }
-
-        visibleCells.forEach { (cell) in
-            cell.circularUpperTabsCellContentView?.alpha = 0.0
-            cell.alpha = 0.0
-        }
+        let cellAndAnimationOverlayViewsAdded = addAnimationOverlayViewFor(indexPath: indexPath)
+        hideCellsWithOverlayView(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
 
         UIView.animate(withDuration: 0.3, animations: {
             self.movingView?.frame = cell.frame
-
             collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
-
-            cellsToRender.forEach({ (cell) in
-                cell.render()
-            })
-
         }) { (finished) in
-            addedCells.forEach({ (view) in
-                view.removeFromSuperview()
-            })
-
-            visibleCells.forEach { (cell) in
-                cell.circularUpperTabsCellContentView?.alpha = 1.0
-                cell.alpha = 1.0
-            }
+            self.removeOverlayViewsShowingCells(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
         }
     }
 }
@@ -177,9 +184,6 @@ extension CircularUpperTabsView: UICollectionViewDelegateFlowLayout {
 extension CircularUpperTabsView: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
 
-        print("cellForItemAt: indexPath: \(indexPath)")
-
-
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellIdentifier,
                                                             for: indexPath) as? CircularUpperTabsCell else {
             return UICollectionViewCell()
@@ -196,13 +200,13 @@ extension CircularUpperTabsView: UICollectionViewDataSource {
             movingView.alpha = 1.0
 
             collectionView.addSubview(movingView)
-            movingView.alpha = 0.3
+            movingView.alpha = 1.0
 
             self.movingView = movingView
         }
 
 
-//        collectionView.sendSubview(toBack: movingView!)
+        collectionView.sendSubview(toBack: movingView!)
 
         cell.cellState = cellState
 
@@ -210,18 +214,7 @@ extension CircularUpperTabsView: UICollectionViewDataSource {
 
     }
 
-    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-
-    }
-
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return cellStates.count
-    }
-}
-
-
-class SomeShit: UICollectionViewFlowLayout {
-    override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
-        return false
     }
 }

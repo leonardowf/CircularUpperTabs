@@ -28,6 +28,10 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: CircularUpperTabsViewDataSource {
+    internal func getCellStatesFor(circularUpperTabsView: CircularUpperTabsView) -> [CircularUpperTabsCellState] {
+        return getCellState()
+    }
+
     func getCellState() -> [CircularUpperTabsCellState] {
         var states: [CircularUpperTabsCellState] = []
 
