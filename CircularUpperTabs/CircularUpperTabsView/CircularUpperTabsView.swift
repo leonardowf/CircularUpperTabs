@@ -10,6 +10,7 @@ import UIKit
 
 protocol CircularUpperTabsViewDataSource: class {
     func getCellStatesFor(circularUpperTabsView: CircularUpperTabsView) -> [CircularUpperTabsCellState]
+    func selectedCellState() -> CircularUpperTabsCellState?
 }
 
 class CircularUpperTabsView: UIView {
@@ -21,6 +22,7 @@ class CircularUpperTabsView: UIView {
     fileprivate let cellIdentifier = "CircularUpperTabsCell"
     fileprivate weak var movingView: UIView?
     fileprivate weak var collectionView: UICollectionView!
+    fileprivate var selectedCellState: CircularUpperTabsCellState?
     weak var dataSource: CircularUpperTabsViewDataSource? {
         didSet {
             reloadData()
@@ -85,9 +87,29 @@ class CircularUpperTabsView: UIView {
             return
         }
 
+        selectedCellState = dataSource?.selectedCellState()
+
         self.cellStates = cellStates
 
-        collectionView.reloadData()
+        collectionView.performBatchUpdates({ 
+            self.collectionView.reloadData()
+        }) { (finished) in
+            self.scrollToSelectedCellState()
+        }
+    }
+
+    fileprivate func scrollToSelectedCellState() {
+        guard let selectedCellState = self.selectedCellState else {
+            return
+        }
+
+        guard let index = cellStates.index(of: selectedCellState) else {
+            return
+        }
+
+        let indexPath = IndexPath(item: index, section: 0)
+
+        collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
     }
 
     fileprivate func addAnimationOverlayViewFor(indexPath: IndexPath) -> [CellAndAnimationOverlayView] {
@@ -136,28 +158,13 @@ class CircularUpperTabsView: UIView {
 
 extension CircularUpperTabsView: UICollectionViewDelegate {
     internal func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        var cellsToRender: [CircularUpperTabsCell] = []
-
-        for (index, state) in cellStates.enumerated() {
-            if state.isSelected {
-                let indexPath = IndexPath(item: index, section: 0)
-                guard let cell = collectionView.cellForItem(at: indexPath) as? CircularUpperTabsCell else {
-                    continue
-                }
-                cellsToRender.append(cell)
-            }
-
-            state.isSelected = false
-        }
-
-        let selectedCellState = cellStates[indexPath.item]
-        selectedCellState.isSelected = true
+//        var cellsToRender: [CircularUpperTabsCell] = []
 
         guard let cell = collectionView.cellForItem(at: indexPath) as? CircularUpperTabsCell else {
             return
         }
 
-        cellsToRender.append(cell)
+//        cellsToRender.append(cell)
 
         let cellAndAnimationOverlayViewsAdded = addAnimationOverlayViewFor(indexPath: indexPath)
         hideCellsWithOverlayView(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
@@ -191,7 +198,7 @@ extension CircularUpperTabsView: UICollectionViewDataSource {
 
         let cellState = cellStates[indexPath.item]
 
-        if cellState.isSelected && movingView == nil {
+        if cellState == selectedCellState && movingView == nil {
             let size = CGSize(width: cellState.width(), height: frame.height - 10)
             let movingView = UIView(frame: CGRect(x: cell.frame.origin.x, y: cell.frame.origin.y, width: size.width, height: size.height))
 
@@ -205,8 +212,10 @@ extension CircularUpperTabsView: UICollectionViewDataSource {
             self.movingView = movingView
         }
 
+        if let movingView = movingView {
+            collectionView.sendSubview(toBack: movingView)
+        }
 
-        collectionView.sendSubview(toBack: movingView!)
 
         cell.cellState = cellState
 

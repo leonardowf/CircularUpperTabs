@@ -10,6 +10,7 @@ import UIKit
 
 class ViewController: UIViewController {
     @IBOutlet weak var circularUpperTabsView: CircularUpperTabsView!
+    var states: [CircularUpperTabsCellState] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,11 +20,15 @@ class ViewController: UIViewController {
 
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+    }
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
 
 }
 
@@ -33,8 +38,6 @@ extension ViewController: CircularUpperTabsViewDataSource {
     }
 
     func getCellState() -> [CircularUpperTabsCellState] {
-        var states: [CircularUpperTabsCellState] = []
-
         let unselectedColor = UIColor.white
         let selectedColor = UIColor.brown
 
@@ -57,6 +60,10 @@ extension ViewController: CircularUpperTabsViewDataSource {
         states.first!.isSelected = true
 
         return states
+    }
+
+    func selectedCellState() -> CircularUpperTabsCellState? {
+        return states[44]
     }
 }
 
