@@ -12,8 +12,12 @@ class ViewController: UIViewController {
     @IBOutlet weak var circularUpperTabsView: CircularUpperTabsView!
     var states: [CircularUpperTabsCellState] = []
 
+    var selected: CircularUpperTabsCellState?
+
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        getCellState()
 
         circularUpperTabsView.dataSource = self
 
@@ -30,11 +34,38 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    @IBAction func didSelectNextButton(_ sender: UIButton) {
+        guard let selected = selected, let index = states.index(of: selected) else {
+            return
+        }
+
+        let next = states[index + 1]
+
+        self.selected = next
+
+        circularUpperTabsView.reloadData()
+
+    }
+
+    @IBAction func didSelectRemakeItemsButton(_ sender: UIButton) {
+        states = []
+        for index in 1...22 {
+            let a = CircularUpperTabsCellState(text: "adssd \(index)")
+
+            states.append(a)
+        }
+        states[1].text = "um texto bem grande"
+
+        selected = states.first
+        circularUpperTabsView.reloadData()
+    }
+
+
 }
 
 extension ViewController: CircularUpperTabsViewDataSource {
     internal func getCellStatesFor(circularUpperTabsView: CircularUpperTabsView) -> [CircularUpperTabsCellState] {
-        return getCellState()
+        return states
     }
 
     func getCellState() -> [CircularUpperTabsCellState] {
@@ -59,11 +90,14 @@ extension ViewController: CircularUpperTabsViewDataSource {
         states[4].text = "um texto bem grande"
         states.first!.isSelected = true
 
+
+        selected = states[0]
+
         return states
     }
 
     func selectedCellState() -> CircularUpperTabsCellState? {
-        return states[44]
+        return selected
     }
 }
 

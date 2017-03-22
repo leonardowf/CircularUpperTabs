@@ -90,9 +90,10 @@ class CircularUpperTabsView: UIView {
         selectedCellState = dataSource?.selectedCellState()
 
         self.cellStates = cellStates
-
-        collectionView.performBatchUpdates({ 
-            self.collectionView.reloadData()
+        
+        self.collectionView.reloadData()
+        collectionView.performBatchUpdates({
+//
         }) { (finished) in
             self.scrollToSelectedCellState()
         }
@@ -109,7 +110,48 @@ class CircularUpperTabsView: UIView {
 
         let indexPath = IndexPath(item: index, section: 0)
 
-        collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
+        if movingView == nil {
+            collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
+        } else {
+            xxx(indexPath: indexPath)
+        }
+
+    }
+
+    fileprivate func xxx(indexPath: IndexPath, animated: Bool = true) {
+        guard let cell = collectionView?.cellForItem(at: indexPath) else {
+            yyy(indexPath: indexPath)
+            return
+        }
+
+        let cellAndAnimationOverlayViewsAdded = addAnimationOverlayViewFor(indexPath: indexPath)
+        hideCellsWithOverlayView(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
+
+        UIView.animate(withDuration: 0.3, animations: {
+            self.movingView?.frame = cell.frame
+            self.collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
+        }) { (finished) in
+            self.removeOverlayViewsShowingCells(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
+        }
+    }
+
+    fileprivate func yyy(indexPath: IndexPath) {
+
+        UIView.animate(withDuration: 0.3, animations: {
+            self.collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
+        }) { (finished) in
+            if let cell = self.collectionView?.cellForItem(at: indexPath) {
+                self.movingView?.frame = cell.frame
+            }
+
+
+        }
+
+
+
+
+
+
     }
 
     fileprivate func addAnimationOverlayViewFor(indexPath: IndexPath) -> [CellAndAnimationOverlayView] {
@@ -164,17 +206,7 @@ extension CircularUpperTabsView: UICollectionViewDelegate {
             return
         }
 
-//        cellsToRender.append(cell)
-
-        let cellAndAnimationOverlayViewsAdded = addAnimationOverlayViewFor(indexPath: indexPath)
-        hideCellsWithOverlayView(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
-
-        UIView.animate(withDuration: 0.3, animations: {
-            self.movingView?.frame = cell.frame
-            collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.centeredHorizontally, animated: false)
-        }) { (finished) in
-            self.removeOverlayViewsShowingCells(cellAndAnimationOverlayViews: cellAndAnimationOverlayViewsAdded)
-        }
+        xxx(indexPath: indexPath)
     }
 }
 

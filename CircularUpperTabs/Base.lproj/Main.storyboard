@@ -27,12 +27,30 @@
                                     <constraint firstAttribute="height" constant="40" id="txo-p9-IZJ"/>
                                 </constraints>
                             </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="aXA-IN-BG1">
+                                <rect key="frame" x="154" y="318.5" width="66" height="30"/>
+                                <state key="normal" title="Next item"/>
+                                <connections>
+                                    <action selector="didSelectNextButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="U9j-em-z4m"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WR2-PQ-v9V">
+                                <rect key="frame" x="138.5" y="358.5" width="97" height="30"/>
+                                <state key="normal" title="Remake Items"/>
+                                <connections>
+                                    <action selector="didSelectRemakeItemsButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="X9A-r4-B2F"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstItem="WR2-PQ-v9V" firstAttribute="centerX" secondItem="aXA-IN-BG1" secondAttribute="centerX" id="E69-WM-BgI"/>
                             <constraint firstAttribute="trailing" secondItem="w2B-R9-CGY" secondAttribute="trailing" id="G4O-fi-PRV"/>
                             <constraint firstItem="w2B-R9-CGY" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="YXz-yx-bWX"/>
                             <constraint firstItem="w2B-R9-CGY" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="co1-MY-Fov"/>
+                            <constraint firstItem="aXA-IN-BG1" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="d1I-uu-y7c"/>
+                            <constraint firstItem="aXA-IN-BG1" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="hEL-To-kx1"/>
+                            <constraint firstItem="WR2-PQ-v9V" firstAttribute="top" secondItem="aXA-IN-BG1" secondAttribute="bottom" constant="10" id="nct-Ej-po1"/>
                         </constraints>
                     </view>
                     <connections>
@@ -41,6 +59,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="-81" y="121"/>
         </scene>
     </scenes>
 </document>
